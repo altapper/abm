@@ -1,0 +1,380 @@
+class IO (file reader/writer)
+
+
+	def readMap(self):
+
+		# function to read map image in, and 'translate' pixel colour values to letters:
+		# R represents road, B buildings, C potential camera spots (i.e the edges of buildings)
+		# and E for entrance/exit points
+
+		opens paint file
+		stores the pixel Red values in an array 'data'
+	
+		interate through the data array of pixel values:
+			if the value = 255 (i.e white)
+				data = B for buildings
+			if the value = 0 (i.e black)
+				data = C for camera spot
+			if the value = 195 
+				data = R for road
+			if the value = 237
+				data = E for entrance/exit
+
+	return data
+
+
+	def readMatrix(self):
+
+		read in 'matrix.csv' file of origin/destination matrix
+		
+		return matrix
+
+
+	def writeCounts(self, dataIn, columnHeadingsIn):
+		
+		# function to save the camera counts for each of the cameras		
+
+		transpose the dataIn
+		store as a pandas dataframe, with column headings = columnHeadingsIn 
+		(i.e, store the counts vertically, same format as Data Mill North, with headings saying
+		the location of the camera)
+		save as 'out.csv'
+
+
+
+class Worker
+
+	def __init__(self, worldIn, agentsIn):
+
+		feeds in a copy of world to the agent
+		feeds in a copy of the list of agents to the agent
+		
+		fetches entrance/exit points with getSpawns function
+		sets entrance point as a random spawn
+		while loop to randomly choose exit point until it is different to the entrance point
+
+		sets worker location as the entrance location
+		sets worker initial state as 'Home'
+
+		## commented out to speed up the program (even though it makes it dodgier):
+		## calculates the journey to work using the shortestpath.shortestjourney method
+		## sets the start time to 9am
+		## sets the home time to 5pm
+		## assigns the length of the journey to 'journeytime'
+		## uses the journey time to calculate the set off time needed to arrive at work by 9am
+		
+
+	def adjustTimes(self):
+		
+		# a function called once a day at midnight, to randomise the choices of 
+		# work start times and 'time spent at work'
+		
+		draws start time from a normal distribution, mean 9am, sd 0.7hr (rounds value)
+		draws time at work from a normal distribution, mean 8 hrs, sd 0.5hr (rounds value)
+		adjusts end time = start time + time at work
+		adjusts set off time = start time - journey time
+
+
+	def adjustLocations(self, entryIn, exitIn, journeyWork, journeyHome):
+		
+		# a function called in the main program, to initialise the agents
+		# based on the origin-destination matrix
+
+		adjusts the entrance and exit points
+		adjusts the journey to work
+		adjusts the journey home
+		
+		calculates the new journey length
+		sets the start time
+		sets the end time
+		and accordingly adjusts the set off time based on the journey length
+
+	def run(self, hourIn):
+	
+		# function runs every iteration for each agent
+		# based on the hourIn, workers will either start journeying to work, start journeying home, 
+		# continue journeying to work, or continue journey home (or simple stay put and do nothing)
+
+		if hourIn = set off time:
+			# start the journey to work
+			set a journey counter to zero
+			call goToWork function
+			increment journey counter by one
+
+		else if hourIn = end time:
+			# start the journey home
+			set journey counter to zero
+			call goHome function
+			increment journey counter by one
+
+		else if worker's state is 'Journeying home':
+			# carry on journeying home
+			call goHome function
+			increment journey counter by one
+
+		else if worker's state is 'Journey to work':
+			# carry on journeying to work
+			call goToWork function
+			incremenet journey counter by one
+
+
+	def goToWork(self, counterIn)
+	
+		# moves along the journey, to the point dictated by the counterIn
+		# i.e the counter is used to keep track of how far along the worker
+		# is in their journey
+
+		if counterIn is less than the journeytime:
+			change the location of the worker to the counterIn'th point in the journey
+			set the state of the worker to 'Journeying to work'
+		if counterIn = journey time:
+			change the location of the worker to the 'exit' location (i.e their work location)
+			change the state of the worker to 'at work'		
+
+	def goHome(self, counterIn)
+
+		# this function mirrors the goToWork function, except work is replaced by home
+
+		if counterIn is less than the journeytime:
+			change the location of the worker to the counterIn'th point in the journey
+			set the state of the worker to 'Journeying home'
+		if counterIn = journey time:
+			change the location of the worker to the 'entrance' location (i.e their home location)
+			change the state of the worker to 'at home'
+
+
+
+
+class Camera:
+
+	def __init__(self, agentsIn, worldIn):
+		
+		feeds in a copy of world to the agent
+		feeds in a copy of the list of agents to the agent
+
+		initialises the camera's running count variable as 0
+		initialises the camera's hourly count storage as an empty array
+
+		reads in the possible camera locations using the world.getCameraSpots function
+		chooses one of those locations randomly as the camera's location
+		runs the findLineOfSight function to assign a line of sight to the camera
+
+	def setLocation(self, locationIn):
+	
+		# function used when the cameras are hardwired into their actual 'real life' positions round Leeds City Centre
+		# called in the main program when building the Cameras
+
+		sets new camera location to locationIn
+		finds new line of sight using findLineOfSight
+
+	def findLineOfSight(self):
+
+		sets lineofsight as an empty array
+		try:
+			reading the 1st adjacent point to the camera's location
+			if that location is a road (i.e has a value 'R')
+				add it to the line of sight array
+		except IndexError:
+			pass
+		... do this for the other 3 adjacent points
+
+		try:
+			find the length of the first item in the line of sight
+			(i.e used as a test as to whether the line of sight has only one item in it)
+			if there is (i.e if the try succeeds):
+			set line of sight to a random choice of the possible line of sight locations
+
+		except TypeError:
+			# happens if there is only one item in line of sight, i.e if there is only one
+			# possible line of sight spot
+			pass
+		
+		except IndexError:
+			# happens if there are no available items in line of sight
+			# i.e if the camera spawns right at the edge next to an entrance/exit
+			pass
+
+		return lineofsight
+
+
+	def updateAgentsEnclosed(self):
+		searches through all the agents
+			if the agent is located in the camera's line of sight:
+				add the agent to a list 'agentsenclosed'
+
+	def countAgentsLeft(self):
+		searches through the agents in the agentsenclosed list
+			if the agent is located NOT in the camera's line of sight:
+				delete the agent from the agentsclosed list
+				add one to the camera's running count
+
+	def run(self, timeIn):
+		run updateAgentsEnclosed
+		run countAgentsLeft
+		if timeIn is equivalent to an hour:
+			store the running counts in the hourlycount array
+			reset the running counts to zero
+
+
+
+class Environment:
+
+	def __init__(self, height, width)
+
+		# initialises with default data
+		assigns height to self.height variable
+		assigns width to self.width variable
+		sets data as entirely 'R' (entirely roads)
+
+	def setMap(self, mapIn)
+
+		# feeds a map in
+		assigns the mapIn to data variable
+		adjusts the height to the height of the mapIn
+		adjusts the width to the width of the mapIn
+		
+	def getSpawns(self):
+		
+		# used to find the indices of the entrance/exit points from the world
+
+		sets up indices as an empty array
+		iterates through data indices, checking to see if the data point is an entrance/exit point
+		(ie whether it's equal to 'E' for entrance/exit)
+		stores the indices of the data points with 'E' in indices array
+		returns indices array
+		
+		
+	def getCameraSpots(self):
+
+		# used to find the indices of possible camera spots (i.e the edges of buildings)
+		# same structure as getSpawns
+
+		sets up indices as an empty array
+		iterates through data indices, checking to see if the data point is a potential camera spot
+		(ie whether it's equal to 'C' for camera)
+		stores the indices of the data points with 'C' in indices array
+		returns indices array
+		
+
+
+#---------- start of main program -----------#
+
+set number of agents (used in the default case, and in the case of an origin-destination matrix expressed in percentages)
+
+set number of cameras
+
+set the number of iterations which is equivalent to an hour
+
+from that, set the number of iterations we want (i.e, desired number of hours * number of iterations per hour)
+
+
+initialise the IO
+
+
+## initialise the environment and adjust its data to match the map fed in
+
+initialise the environment
+
+call the IO function readMap to generate a mapIn
+
+use the environment function setMap to set the environment data to mapIn
+
+
+## set up the flattened list of the origin-destination matrix 
+
+
+call the IO function readMatrix, assign to matrix variable
+flatten the matrix into a 1D list
+call the environment function getSpawns
+
+create array to store the journeys from each entrance to exit
+use shortestpath.shortestjourney(spawns1, spawns 2) for all spawns1 in spawns and all spawns2 in spawns
+
+
+sets up an empty agents array
+
+
+def buildAgents(listIn, length, width)
+
+	# function to create agents with the correct origins/destinations
+	# listIn is the list of origin-destination parameters (i.e the flattened matrix)
+	# length and width are the dimensions of the unflattened matrix
+
+
+	if the origin destination matrix is percentage form:
+	population = (all items in listIn) * number of agents, rounded to nearest integer
+	
+	if the origin destination matrix is just numbers:
+	population = listIn
+
+	iterates through the list of origin-destination parameters:
+		stores in the agents array the right number of worker with each origin-desintation parameter value
+		(use worker function adjustLocations to adjust the entrance and exit points, according to where
+		the loop is in the list)
+			
+
+
+def genericAgents()
+
+	# function to set up agents if there isn't an origin-destination matrix being used
+
+	for i from 0 to number of agents:
+		store in the agent array a new worker
+
+
+
+create empty camera array
+locations = hardwired list of 8 camera locations, corresponding to the 'real life' locations of the 8 cameras in leeds city centre
+
+
+def buildCameras()
+
+	# function to set up cameras
+
+	for i from 0 to number of cameras:
+		store a new camera, in the ith location in locations list
+		
+
+def runAgents()
+
+	# run agents function, the main 'meat' of the model
+	# where all the movement and action actually happens
+
+	for i from 0 to number of iterations:
+		clock = remainder of i divided by (24 * ticks per hour)
+		(to get the minute of the day)
+		
+		# move agents
+
+		iterate through agents:
+			call agents.run(clock) function
+	
+		# update camera counts
+			
+		iterate through cameras:
+			update each camera using camera.run(clock) function
+
+
+def saveCameraCounts()
+	
+	# stores the camera counts 
+
+	set up empty data array
+	set up empty column headings array
+	for each camera in cameras:
+		store the hourlycounts for the camera in the data array
+		store the camera's line of sight in the column headings array
+	call the io.writeCounts(data, columnheadings) function 
+	return data (i.e return an array of camera counts for all 8 cameras)
+
+
+def runProgram(listIn, lengthIn, widthIn)
+
+	call buildAgents(listIn, lengthIn, widthIn) to build the agents
+	call buildCameras to build the cameras
+	call runAgents
+	store camera counts in variable counts using saveCameraCounts function
+	
+
+
+
